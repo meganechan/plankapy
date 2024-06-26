@@ -1,5 +1,17 @@
+import sys
+from pathlib import Path
+
+# Add the parent directory of `plankapy` to sys.path
+current_dir = Path(__file__).parent
+parent_dir = current_dir.parent
+sys.path.append(str(parent_dir))
+
 from plankapy import *
 import random
+
+API_URL="https://planka.bethub.link"
+API_USER="meganechan"
+API_PASS="qwerty@1234"
 
 def test_planka():
     ## In no way meant to be efficient code, just a way to test all components 

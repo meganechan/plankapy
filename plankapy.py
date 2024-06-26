@@ -58,7 +58,7 @@ class Planka:
         except:
             raise InvalidToken(f"Invalid API credentials\n{self.__repr__()}")
 
-    def request(self, method:str, endpoint:str, data:dict=None) -> dict:
+    def request(self, method:str, endpoint:str, data:dict=None,files:dict = None) -> dict:
         """Makes a request to the Planka API
         - method: HTTP method
         - endpoint: API endpoint
@@ -67,13 +67,17 @@ class Planka:
         """
         if not self.auth:
             self.authenticate()
-        headers = \
-            { 
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.auth}"
-            }
+
+        headers = {
+            "Authorization": f"Bearer {self.auth}",
+        }
+
         url = f"{self.url}{endpoint}"
-        response = requests.request(method, url, headers=headers, json=data)
+
+        if files:
+            response = requests.request(method, url, headers=headers, data = {},files=files)
+        else:
+            response = requests.request(method, url, headers=headers, json=data)
 
         if response.status_code == 401:
             raise InvalidToken("Invalid API credentials")
@@ -86,6 +90,7 @@ class Planka:
         except:
             raise InvalidToken(f"Failed to parse response from {url}")
     
+
     def get_template(self, template:str) -> dict:
         """Returns a template from the templates.json file
         - template: Name of template to return
@@ -129,7 +134,7 @@ class Controller():
         self.data = data
         return self.data
 
-    def create(self, route:str, data:dict=None) -> dict:
+    def create(self,route:str, data:dict=None,files:dict = None) -> dict:
         """Creates a new controller object (POST)
         - route: Route for controller object POST request
         - **return:** POST response dictionary
@@ -138,7 +143,7 @@ class Controller():
             data = self.data
         if not data:
             raise InvalidToken(f"Please Build a {type(self).__name__} before creating")
-        self.response = self.instance.request("POST", route, data)
+        self.response = self.instance.request("POST",endpoint=route,data=data,files=files)
         return self.response
 
     def get(self, route:str) -> dict:
@@ -684,6 +689,16 @@ class Attachment(Controller):
         self.instance = instance
         self.template = instance.get_template("attachment")
         self.data = self.build(**kwargs)
+
+    def createAttachment(self,files:dict=None):
+
+        if not files:
+            raise InvalidToken(f"Please provide a file to upload")
+
+        data = self.data
+        files = files
+
+        return super().create(f"/api/cards/{data['cardId']}/attachments", files=files)
 
 class Stopwatch(Controller):
     def __init__(self, instance:Planka, **kwargs) -> None:
